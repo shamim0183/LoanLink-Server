@@ -1,5 +1,5 @@
 const Loan = require("../models/Loan.model")
-const Application = require("../models/Application.model")
+const Application = require("../models/LoanApplication.model")
 
 // Create new loan
 exports.createLoan = async (req, res) => {

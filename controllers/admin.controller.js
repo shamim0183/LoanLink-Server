@@ -1,6 +1,6 @@
 const User = require("../models/User.model")
 const Loan = require("../models/Loan.model")
-const Application = require("../models/Application.model")
+const Application = require("../models/LoanApplication.model")
 
 // Get all users
 exports.getAllUsers = async (req, res) => {
