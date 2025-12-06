@@ -1,11 +1,11 @@
 const express = require("express")
 const router = express.Router()
 const managerController = require("../controllers/manager.controller")
-const { authenticateToken } = require("../middleware/auth.middleware")
+const { verifyToken } = require("../middleware/auth.middleware")
 const { isManager } = require("../middleware/role.middleware")
 
 // Middleware to protect all manager routes
-router.use(authenticateToken, isManager)
+router.use(verifyToken, isManager)
 
 // Loan management routes
 router.post("/loans", managerController.createLoan)
