@@ -9,6 +9,8 @@ const authRoutes = require("./routes/auth.routes")
 const loanRoutes = require("./routes/loan.routes")
 const applicationRoutes = require("./routes/application.routes")
 const paymentRoutes = require("./routes/payment.routes")
+const adminRoutes = require("./routes/admin.routes")
+const managerRoutes = require("./routes/manager.routes")
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -35,6 +37,8 @@ app.use("/api/auth", authRoutes)
 app.use("/api/loans", loanRoutes)
 app.use("/api/applications", applicationRoutes)
 app.use("/api/payments", paymentRoutes)
+app.use("/api/admin", adminRoutes)
+app.use("/api/manager", managerRoutes)
 
 // Health check route
 app.get("/", (req, res) => {
