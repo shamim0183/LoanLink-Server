@@ -235,8 +235,8 @@ exports.cancelApplication = async (req, res) => {
       })
     }
 
-    // Check ownership
-    if (application.userId.toString() !== req.user.userId) {
+    // Check ownership - convert both to strings for comparison
+    if (application.userId.toString() !== req.user.userId.toString()) {
       return res.status(403).json({
         success: false,
         message: "Unauthorized",

@@ -31,6 +31,11 @@ const paymentSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    stripeSessionId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     status: {
       type: String,
       enum: ["pending", "completed", "failed"],

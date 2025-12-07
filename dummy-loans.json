@@ -1,0 +1,112 @@
+[
+  {
+    "title": "Personal Emergency Fund",
+    "category": "personal",
+    "amount": 5000,
+    "interestRate": 8.5,
+    "duration": 12,
+    "description": "Quick personal loan for emergency expenses like medical bills or urgent home repairs.",
+    "minimumIncome": 25000,
+    "creditScoreRequired": 650,
+    "imageUrl": "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=500"
+  },
+  {
+    "title": "Small Business Startup",
+    "category": "business",
+    "amount": 50000,
+    "interestRate": 12,
+    "duration": 36,
+    "description": "Capital for starting a small business, covering inventory, equipment, and initial operating costs.",
+    "minimumIncome": 50000,
+    "creditScoreRequired": 700,
+    "imageUrl": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=500"
+  },
+  {
+    "title": "Higher Education Loan",
+    "category": "education",
+    "amount": 30000,
+    "interestRate": 6.5,
+    "duration": 48,
+    "description": "Affordable education loan for undergraduate or graduate studies with flexible repayment options.",
+    "minimumIncome": 20000,
+    "creditScoreRequired": 600,
+    "imageUrl": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500"
+  },
+  {
+    "title": "Dream Home Mortgage",
+    "category": "home",
+    "amount": 250000,
+    "interestRate": 7.2,
+    "duration": 240,
+    "description": "Long-term home loan with competitive interest rates for purchasing your dream property.",
+    "minimumIncome": 80000,
+    "creditScoreRequired": 720,
+    "imageUrl": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=500"
+  },
+  {
+    "title": "New Car Financing",
+    "category": "auto",
+    "amount": 25000,
+    "interestRate": 9.5,
+    "duration": 60,
+    "description": "Auto loan for purchasing a new or used vehicle with affordable monthly payments.",
+    "minimumIncome": 35000,
+    "creditScoreRequired": 680,
+    "imageUrl": "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=500"
+  },
+  {
+    "title": "Medical Emergency Loan",
+    "category": "personal",
+    "amount": 15000,
+    "interestRate": 7.8,
+    "duration": 24,
+    "description": "Fast approval loan for medical treatments, surgeries, or healthcare emergencies.",
+    "minimumIncome": 30000,
+    "creditScoreRequired": 620,
+    "imageUrl": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=500"
+  },
+  {
+    "title": "Business Expansion Fund",
+    "category": "business",
+    "amount": 100000,
+    "interestRate": 13.5,
+    "duration": 60,
+    "description": "Capital for expanding existing business operations, hiring staff, or opening new locations.",
+    "minimumIncome": 100000,
+    "creditScoreRequired": 750,
+    "imageUrl": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500"
+  },
+  {
+    "title": "Home Renovation Budget",
+    "category": "home",
+    "amount": 40000,
+    "interestRate": 8.9,
+    "duration": 84,
+    "description": "Renovate your home with our flexible loan covering kitchen remodels, bathrooms, and extensions.",
+    "minimumIncome": 45000,
+    "creditScoreRequired": 670,
+    "imageUrl": "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=500"
+  },
+  {
+    "title": "Professional Development Course",
+    "category": "education",
+    "amount": 8000,
+    "interestRate": 5.5,
+    "duration": 18,
+    "description": "Invest in your career with loans for professional certifications, courses, and skill development.",
+    "minimumIncome": 25000,
+    "creditScoreRequired": 640,
+    "imageUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500"
+  },
+  {
+    "title": "Wedding Celebration Fund",
+    "category": "personal",
+    "amount": 20000,
+    "interestRate": 10.5,
+    "duration": 36,
+    "description": "Make your special day memorable with our wedding loan covering venue, catering, and celebrations.",
+    "minimumIncome": 40000,
+    "creditScoreRequired": 660,
+    "imageUrl": "https://images.unsplash.com/photo-1519741497674-611481863552?w=500"
+  }
+]
