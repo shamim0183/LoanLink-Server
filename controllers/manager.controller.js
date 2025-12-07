@@ -74,13 +74,24 @@ exports.deleteLoan = async (req, res) => {
 // Get pending applications
 exports.getPendingApplications = async (req, res) => {
   try {
-    const applications = await Application.find({ status: "Pending" })
-      .populate("user", "name email")
-      .populate("loan", "title category")
-      .sort({ appliedDate: -1 })
+    // First, get all loans created by this manager
+    const managerLoans = await Loan.find({ createdBy: req.user.userId }).select(
+      "_id"
+    )
+    const loanIds = managerLoans.map((loan) => loan._id)
+
+    // Then get applications for those loans
+    const applications = await Application.find({
+      loanId: { $in: loanIds },
+      status: "pending",
+    })
+      .populate("userId", "name email")
+      .populate("loanId", "title category")
+      .sort({ createdAt: -1 })
 
     res.json(applications)
   } catch (error) {
+    console.error("Get pending applications error:", error)
     res.status(500).json({ error: "Failed to fetch pending applications" })
   }
 }
@@ -88,13 +99,24 @@ exports.getPendingApplications = async (req, res) => {
 // Get approved applications
 exports.getApprovedApplications = async (req, res) => {
   try {
-    const applications = await Application.find({ status: "Approved" })
-      .populate("user", "name email")
-      .populate("loan", "title category")
+    // First, get all loans created by this manager
+    const managerLoans = await Loan.find({ createdBy: req.user.userId }).select(
+      "_id"
+    )
+    const loanIds = managerLoans.map((loan) => loan._id)
+
+    // Then get applications for those loans
+    const applications = await Application.find({
+      loanId: { $in: loanIds },
+      status: "approved",
+    })
+      .populate("userId", "name email")
+      .populate("loanId", "title category")
       .sort({ approvedAt: -1 })
 
     res.json(applications)
   } catch (error) {
+    console.error("Get approved applications error:", error)
     res.status(500).json({ error: "Failed to fetch approved applications" })
   }
 }
@@ -104,18 +126,32 @@ exports.approveApplication = async (req, res) => {
   try {
     const { appId } = req.params
 
-    const application = await Application.findByIdAndUpdate(
-      appId,
-      {
-        status: "Approved",
-        approvedAt: new Date(),
-        approvedBy: req.user.userId,
-      },
-      { new: true }
-    )
+    // First, fetch the application and populate the loan
+    const application = await Application.findById(appId).populate("loanId")
+
+    if (!application) {
+      return res.status(404).json({ error: "Application not found" })
+    }
+
+    // Verify that the loan was created by this manager
+    if (
+      application.loanId.createdBy.toString() !== req.user.userId.toString()
+    ) {
+      return res.status(403).json({
+        error:
+          "Unauthorized: You can only approve applications for your own loans",
+      })
+    }
+
+    // Update the application status
+    application.status = "approved"
+    application.approvedAt = new Date()
+    application.approvedBy = req.user.userId
+    await application.save()
 
     res.json(application)
   } catch (error) {
+    console.error("Approve application error:", error)
     res.status(500).json({ error: "Failed to approve application" })
   }
 }
@@ -126,19 +162,33 @@ exports.rejectApplication = async (req, res) => {
     const { appId } = req.params
     const { reason } = req.body
 
-    const application = await Application.findByIdAndUpdate(
-      appId,
-      {
-        status: "Rejected",
-        rejectedAt: new Date(),
-        rejectedBy: req.user.userId,
-        rejectionReason: reason,
-      },
-      { new: true }
-    )
+    // First, fetch the application and populate the loan
+    const application = await Application.findById(appId).populate("loanId")
+
+    if (!application) {
+      return res.status(404).json({ error: "Application not found" })
+    }
+
+    // Verify that the loan was created by this manager
+    if (
+      application.loanId.createdBy.toString() !== req.user.userId.toString()
+    ) {
+      return res.status(403).json({
+        error:
+          "Unauthorized: You can only reject applications for your own loans",
+      })
+    }
+
+    // Update the application status
+    application.status = "rejected"
+    application.rejectedAt = new Date()
+    application.rejectedBy = req.user.userId
+    application.rejectionReason = reason
+    await application.save()
 
     res.json(application)
   } catch (error) {
+    console.error("Reject application error:", error)
     res.status(500).json({ error: "Failed to reject application" })
   }
 }

@@ -10,6 +10,7 @@ const {
 // Public routes
 router.get("/", loanController.getAllLoans)
 router.get("/home", loanController.getHomeLoans)
+router.get("/featured", loanController.getHomeLoans) // Alias for featured loans
 router.get("/:id", loanController.getLoanById)
 
 // Manager/Admin routes
