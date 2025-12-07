@@ -111,12 +111,13 @@ exports.toggleShowOnHome = async (req, res) => {
 exports.getAllApplications = async (req, res) => {
   try {
     const applications = await Application.find()
-      .populate("user", "name email")
-      .populate("loan", "title category")
-      .sort({ appliedDate: -1 })
+      .populate("userId", "name email")
+      .populate("loanId", "title category")
+      .sort({ createdAt: -1 })
 
     res.json(applications)
   } catch (error) {
+    console.error("Error fetching applications:", error)
     res.status(500).json({ error: "Failed to fetch applications" })
   }
 }
