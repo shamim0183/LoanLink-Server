@@ -79,3 +79,97 @@ exports.logout = (req, res) => {
     message: "Logout successful",
   })
 }
+
+// Update Profile (name and photoURL)
+exports.updateProfile = async (req, res) => {
+  const { name, photoURL } = req.body
+  const { email } = req.user // From auth middleware
+
+  try {
+    const user = await User.findOneAndUpdate(
+      { email },
+      {
+        $set: {
+          name: name || user.name,
+          photoURL: photoURL !== undefined ? photoURL : user.photoURL,
+        },
+      },
+      { new: true }
+    )
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      })
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        photoURL: user.photoURL,
+        role: user.role,
+        status: user.status,
+      },
+    })
+  } catch (error) {
+    console.error("Profile Update Error:", error)
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    })
+  }
+}
+
+// Update Role (for OAuth users)
+exports.updateRole = async (req, res) => {
+  const { role } = req.body
+  const { email } = req.user // From auth middleware
+
+  try {
+    if (!["borrower", "manager"].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role. Must be 'borrower' or 'manager'",
+      })
+    }
+
+    const user = await User.findOneAndUpdate(
+      { email },
+      { $set: { role } },
+      { new: true }
+    )
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      })
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Role updated successfully",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        photoURL: user.photoURL,
+        role: user.role,
+        status: user.status,
+      },
+    })
+  } catch (error) {
+    console.error("Role Update Error:", error)
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    })
+  }
+}
