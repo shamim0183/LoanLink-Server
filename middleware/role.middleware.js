@@ -2,7 +2,7 @@
 
 // Check if user is admin
 exports.isAdmin = (req, res, next) => {
-  if (req.userRole !== "admin") {
+  if (req.user?.role !== "admin") {
     return res.status(403).json({ error: "Access denied. Admin only." })
   }
   next()
@@ -10,7 +10,7 @@ exports.isAdmin = (req, res, next) => {
 
 // Check if user is manager or admin
 exports.isManager = (req, res, next) => {
-  if (req.userRole !== "manager" && req.userRole !== "admin") {
+  if (req.user?.role !== "manager" && req.user?.role !== "admin") {
     return res.status(403).json({ error: "Access denied. Manager only." })
   }
   next()
@@ -18,7 +18,7 @@ exports.isManager = (req, res, next) => {
 
 // Check if user is borrower
 exports.isBorrower = (req, res, next) => {
-  if (!req.userRole) {
+  if (!req.user?.role) {
     return res.status(403).json({ error: "Access denied." })
   }
   next()

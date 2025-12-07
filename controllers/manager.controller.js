@@ -6,21 +6,24 @@ exports.createLoan = async (req, res) => {
   try {
     const loanData = {
       ...req.body,
-      createdBy: req.userId,
+      createdBy: req.user.userId,
       createdAt: new Date(),
     }
 
     const loan = await Loan.create(loanData)
     res.status(201).json(loan)
   } catch (error) {
-    res.status(500).json({ error: "Failed to create loan" })
+    console.error("Create loan error:", error)
+    res
+      .status(500)
+      .json({ error: "Failed to create loan", details: error.message })
   }
 }
 
 // Get manager's loans
 exports.getMyLoans = async (req, res) => {
   try {
-    const loans = await Loan.find({ createdBy: req.userId })
+    const loans = await Loan.find({ createdBy: req.user.userId })
     res.json(loans)
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch loans" })
@@ -33,7 +36,7 @@ exports.updateLoan = async (req, res) => {
     const { loanId } = req.params
 
     const loan = await Loan.findOneAndUpdate(
-      { _id: loanId, createdBy: req.userId },
+      { _id: loanId, createdBy: req.user.userId },
       req.body,
       { new: true }
     )
@@ -55,7 +58,7 @@ exports.deleteLoan = async (req, res) => {
 
     const loan = await Loan.findOneAndDelete({
       _id: loanId,
-      createdBy: req.userId,
+      createdBy: req.user.userId,
     })
 
     if (!loan) {
@@ -106,7 +109,7 @@ exports.approveApplication = async (req, res) => {
       {
         status: "Approved",
         approvedAt: new Date(),
-        approvedBy: req.userId,
+        approvedBy: req.user.userId,
       },
       { new: true }
     )
@@ -128,7 +131,7 @@ exports.rejectApplication = async (req, res) => {
       {
         status: "Rejected",
         rejectedAt: new Date(),
-        rejectedBy: req.userId,
+        rejectedBy: req.user.userId,
         rejectionReason: reason,
       },
       { new: true }
