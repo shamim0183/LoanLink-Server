@@ -3,9 +3,21 @@ const User = require("../models/User.model")
 
 // Generate JWT Token
 exports.generateToken = async (req, res) => {
-  const { email, name, photoURL } = req.body
+  let { email, name, photoURL, uid } = req.body
 
   try {
+    // Handle GitHub users without public email
+    if (!email && uid) {
+      email = `github_${uid}@loanlink.local`
+    }
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email or UID is required",
+      })
+    }
+
     let user = await User.findOne({ email })
 
     if (!user) {
@@ -41,7 +53,7 @@ exports.generateToken = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days,
     })
 
     res.status(200).json({
