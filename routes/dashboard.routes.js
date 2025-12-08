@@ -57,10 +57,10 @@ router.get("/stats", verifyToken, async (req, res) => {
       // Calculate total amount from approved applications
       const approvedApplicationsData = await LoanApplication.find({
         status: "approved",
-      }).select("amount")
+      }).select("loanAmount")
 
       const totalAmount = approvedApplicationsData.reduce(
-        (sum, app) => sum + (app.amount || 0),
+        (sum, app) => sum + (app.loanAmount || 0),
         0
       )
 
@@ -97,10 +97,10 @@ router.get("/stats", verifyToken, async (req, res) => {
       const approvedApplicationsData = await LoanApplication.find({
         userId,
         status: "approved",
-      }).select("amount")
+      }).select("loanAmount")
 
       const totalBorrowed = approvedApplicationsData.reduce(
-        (sum, app) => sum + (app.amount || 0),
+        (sum, app) => sum + (app.loanAmount || 0),
         0
       )
 
