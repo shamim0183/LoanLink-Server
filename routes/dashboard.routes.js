@@ -25,11 +25,26 @@ router.get("/stats", verifyToken, async (req, res) => {
           LoanApplication.countDocuments({ status: "approved" }),
         ])
 
+      // Recent activity for admin
+      const recentActivity = await LoanApplication.find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate("userId", "name email")
+        .populate("loanId", "title")
+        .select("status createdAt updatedAt amount")
+
       stats = {
         totalUsers,
         totalLoans,
         pendingApplications: pendingApps,
         approvedApplications: approvedApps,
+        recentActivity: recentActivity.map((app) => ({
+          message: `${app.userId?.name || "User"} applied for ${
+            app.loanId?.title || "a loan"
+          }`,
+          status: app.status,
+          time: app.createdAt,
+        })),
       }
     } else if (userRole === "manager") {
       // Manager stats
@@ -49,11 +64,26 @@ router.get("/stats", verifyToken, async (req, res) => {
         0
       )
 
+      // Recent activity for manager
+      const recentActivity = await LoanApplication.find()
+        .sort({ updatedAt: -1 })
+        .limit(5)
+        .populate("userId", "name")
+        .populate("loanId", "title")
+        .select("status createdAt updatedAt amount")
+
       stats = {
         myLoans,
         pendingApplications: pendingApps,
         approvedApplications: approvedApps,
         totalAmount,
+        recentActivity: recentActivity.map((app) => ({
+          message: `${app.userId?.name || "User"} - ${
+            app.loanId?.title || "Loan"
+          } ${app.status}`,
+          status: app.status,
+          time: app.updatedAt,
+        })),
       }
     } else {
       // Borrower stats
@@ -74,11 +104,25 @@ router.get("/stats", verifyToken, async (req, res) => {
         0
       )
 
+      // Recent activity for borrower
+      const recentActivity = await LoanApplication.find({ userId })
+        .sort({ updatedAt: -1 })
+        .limit(5)
+        .populate("loanId", "title")
+        .select("status createdAt updatedAt amount")
+
       stats = {
         myApplications: myApps,
         pendingApplications: pendingApps,
         approvedApplications: approvedApps,
         totalBorrowed,
+        recentActivity: recentActivity.map((app) => ({
+          message: `Application for ${app.loanId?.title || "loan"} - ${
+            app.status
+          }`,
+          status: app.status,
+          time: app.updatedAt,
+        })),
       }
     }
 
