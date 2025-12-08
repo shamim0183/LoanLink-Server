@@ -1,16 +1,16 @@
 const express = require("express")
 const router = express.Router()
-const { protect } = require("../middleware/auth.middleware")
-const Application = require("../models/Application")
-const Loan = require("../models/Loan")
-const User = require("../models/User")
+const { verifyToken } = require("../middleware/auth.middleware")
+const LoanApplication = require("../models/LoanApplication.model")
+const Loan = require("../models/Loan.model")
+const User = require("../models/User.model")
 
 // @route   GET /api/dashboard/stats
 // @desc    Get dashboard statistics based on user role
 // @access  Private
-router.get("/stats", protect, async (req, res) => {
+router.get("/stats", verifyToken, async (req, res) => {
   try {
-    const userId = req.user._id
+    const userId = req.user.userId // from auth middleware
     const userRole = req.user.role
 
     let stats = {}
@@ -21,8 +21,8 @@ router.get("/stats", protect, async (req, res) => {
         await Promise.all([
           User.countDocuments(),
           Loan.countDocuments(),
-          Application.countDocuments({ status: "pending" }),
-          Application.countDocuments({ status: "approved" }),
+          LoanApplication.countDocuments({ status: "pending" }),
+          LoanApplication.countDocuments({ status: "approved" }),
         ])
 
       stats = {
@@ -35,12 +35,12 @@ router.get("/stats", protect, async (req, res) => {
       // Manager stats
       const [myLoans, pendingApps, approvedApps] = await Promise.all([
         Loan.countDocuments({ createdBy: userId }),
-        Application.countDocuments({ status: "pending" }),
-        Application.countDocuments({ status: "approved" }),
+        LoanApplication.countDocuments({ status: "pending" }),
+        LoanApplication.countDocuments({ status: "approved" }),
       ])
 
       // Calculate total amount from approved applications
-      const approvedApplicationsData = await Application.find({
+      const approvedApplicationsData = await LoanApplication.find({
         status: "approved",
       }).select("amount")
 
@@ -58,13 +58,13 @@ router.get("/stats", protect, async (req, res) => {
     } else {
       // Borrower stats
       const [myApps, pendingApps, approvedApps] = await Promise.all([
-        Application.countDocuments({ userId }),
-        Application.countDocuments({ userId, status: "pending" }),
-        Application.countDocuments({ userId, status: "approved" }),
+        LoanApplication.countDocuments({ userId }),
+        LoanApplication.countDocuments({ userId, status: "pending" }),
+        LoanApplication.countDocuments({ userId, status: "approved" }),
       ])
 
       // Calculate total borrowed amount
-      const approvedApplicationsData = await Application.find({
+      const approvedApplicationsData = await LoanApplication.find({
         userId,
         status: "approved",
       }).select("amount")
