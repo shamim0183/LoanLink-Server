@@ -10,6 +10,36 @@ const loanRoutes = require("./routes/loan.routes")
 const applicationRoutes = require("./routes/application.routes")
 const paymentRoutes = require("./routes/payment.routes")
 const adminRoutes = require("./routes/admin.routes")
+const managerRoutes = require("./routes/manager.routes")
+
+const app = express()
+const PORT = process.env.PORT || 5000
+
+// Middleware - CORS Configuration
+const corsOptions = {
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://loanlink-bd.netlify.app",
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Set-Cookie"],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+}
+
+app.use(cors(corsOptions))
+
+// Handle preflight requests explicitly
+app.options("*", cors(corsOptions))
+
+// Stripe webhook needs raw body for signature verification
+app.use("/api/payments/webhook", express.raw({ type: "application/json" }))
+
+// JSON parser for all other routes
+app.use(express.json())
 app.use(cookieParser())
 
 // Connect to MongoDB
