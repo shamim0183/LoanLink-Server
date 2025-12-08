@@ -110,13 +110,11 @@ app.use((err, req, res, next) => {
   })
 })
 
-// Start server only in local development (not in Vercel)
-if (process.env.NODE_ENV !== "production") {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`)
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`)
+  console.log(`📍 Environment: ${process.env.NODE_ENV || "development"}`)
+  if (process.env.NODE_ENV !== "production") {
     console.log(`📍 http://localhost:${PORT}`)
-  })
-}
-
-// Export the Express app for Vercel serverless deployment
-module.exports = app
+  }
+})
