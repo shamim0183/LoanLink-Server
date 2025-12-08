@@ -7,7 +7,6 @@
 ![MongoDB](https://img.shields.io/badge/MongoDB-8.0.3-47A248?logo=mongodb)
 ![Stripe](https://img.shields.io/badge/Stripe-14.8.0-635bff?logo=stripe)
 ![JWT](https://img.shields.io/badge/JWT-9.0.2-000000?logo=jsonwebtokens)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
 
 **Secure RESTful API for the LoanLink Microloan Management Platform**
 
