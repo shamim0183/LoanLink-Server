@@ -15,15 +15,31 @@ const managerRoutes = require("./routes/manager.routes")
 const app = express()
 const PORT = process.env.PORT || 5000
 
-// Middleware
+// Middleware - CORS Configuration
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  process.env.CLIENT_URL,
+].filter(Boolean) // Remove undefined values
+
+console.log("🌐 Allowed CORS Origins:", allowedOrigins)
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      process.env.CLIENT_URL,
-    ],
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true)
+
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true)
+      } else {
+        console.log("❌ CORS blocked origin:", origin)
+        callback(new Error("Not allowed by CORS"))
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 )
 
