@@ -10,44 +10,6 @@ const loanRoutes = require("./routes/loan.routes")
 const applicationRoutes = require("./routes/application.routes")
 const paymentRoutes = require("./routes/payment.routes")
 const adminRoutes = require("./routes/admin.routes")
-const managerRoutes = require("./routes/manager.routes")
-
-const app = express()
-const PORT = process.env.PORT || 5000
-
-// Middleware - CORS Configuration
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174",
-  process.env.CLIENT_URL,
-].filter(Boolean) // Remove undefined values
-
-console.log("🌐 Allowed CORS Origins:", allowedOrigins)
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl)
-      if (!origin) return callback(null, true)
-
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true)
-      } else {
-        console.log("❌ CORS blocked origin:", origin)
-        callback(new Error("Not allowed by CORS"))
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-)
-
-// Stripe webhook needs raw body for signature verification
-app.use("/api/payments/webhook", express.raw({ type: "application/json" }))
-
-// JSON parser for all other routes
-app.use(express.json())
 app.use(cookieParser())
 
 // Connect to MongoDB
