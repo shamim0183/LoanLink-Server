@@ -16,12 +16,39 @@ const app = express()
 const PORT = process.env.PORT || 5000
 
 // Middleware - CORS Configuration
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://loanlink-bd.netlify.app",
+]
+
+// Manual CORS headers for Vercel compatibility
+app.use((req, res, next) => {
+  const origin = req.headers.origin
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin)
+    res.setHeader("Access-Control-Allow-Credentials", "true")
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,DELETE,PATCH,OPTIONS"
+    )
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type,Authorization,Accept"
+    )
+    res.setHeader("Access-Control-Expose-Headers", "Set-Cookie")
+  }
+
+  // Handle preflight
+  if (req.method === "OPTIONS") {
+    return res.status(204).end()
+  }
+
+  next()
+})
+
 const corsOptions = {
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "https://loanlink-bd.netlify.app",
-  ],
+  origin: allowedOrigins,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Accept"],
@@ -31,9 +58,6 @@ const corsOptions = {
 }
 
 app.use(cors(corsOptions))
-
-// Handle preflight requests explicitly
-app.options("*", cors(corsOptions))
 
 // Stripe webhook needs raw body for signature verification
 app.use("/api/payments/webhook", express.raw({ type: "application/json" }))
