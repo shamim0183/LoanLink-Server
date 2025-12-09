@@ -20,15 +20,29 @@ exports.generateToken = async (req, res) => {
 
     let user = await User.findOne({ email })
 
+    // If user doesn't exist, only create for OAuth logins (has photoURL or uid)
+    // Regular email/password users must complete registration first
     if (!user) {
-      // Create new user if doesn't exist
-      user = await User.create({
-        email,
-        name: name || "Anonymous",
-        photoURL: photoURL || null,
-        role: "borrower",
-        status: "active",
-      })
+      // Check if this is an OAuth login (has photoURL from provider or GitHub uid)
+      const isOAuthLogin = photoURL || uid
+
+      if (isOAuthLogin) {
+        // Auto-create OAuth users WITHOUT a role - this triggers role selection modal
+        user = await User.create({
+          email,
+          name: name || "Anonymous",
+          photoURL: photoURL || null,
+          // Don't set role - will trigger role selection modal on first login
+          status: "active",
+          firebaseUID: uid || null,
+        })
+      } else {
+        // Email/password users must register first
+        return res.status(404).json({
+          success: false,
+          message: "User not found. Please complete registration first.",
+        })
+      }
     }
 
     // Check if user is suspended
@@ -92,20 +106,26 @@ exports.logout = (req, res) => {
   })
 }
 
-// Update Profile (name and photoURL)
+// Update Profile (name, photoURL, and role during registration)
 exports.updateProfile = async (req, res) => {
-  const { name, photoURL } = req.body
+  const { name, photoURL, role } = req.body
   const { email } = req.user // From auth middleware
 
   try {
+    const updateData = {
+      name: name || user.name,
+      photoURL: photoURL !== undefined ? photoURL : user.photoURL,
+    }
+
+    // Allow role update only if it's a valid role (borrower or manager)
+    // This is primarily for registration flow
+    if (role && ["borrower", "manager"].includes(role)) {
+      updateData.role = role
+    }
+
     const user = await User.findOneAndUpdate(
       { email },
-      {
-        $set: {
-          name: name || user.name,
-          photoURL: photoURL !== undefined ? photoURL : user.photoURL,
-        },
-      },
+      { $set: updateData },
       { new: true }
     )
 

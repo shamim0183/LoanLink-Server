@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ["admin", "manager", "borrower"],
-      default: "borrower",
+      // No default - will be set during registration or via role modal for OAuth users
     },
     status: {
       type: String,
