@@ -18,6 +18,11 @@ exports.updateUserRole = async (req, res) => {
     const { userId } = req.params
     const { role } = req.body
 
+    // Prevent admin from changing their own role
+    if (userId === req.user.userId) {
+      return res.status(403).json({ error: "You cannot change your own role" })
+    }
+
     if (!["borrower", "manager", "admin"].includes(role)) {
       return res.status(400).json({ error: "Invalid role" })
     }
@@ -39,6 +44,13 @@ exports.suspendUser = async (req, res) => {
   try {
     const { userId } = req.params
     const { suspended, reason } = req.body
+
+    // Prevent admin from suspending themselves
+    if (userId === req.user.userId) {
+      return res
+        .status(403)
+        .json({ error: "You cannot suspend or unsuspend yourself" })
+    }
 
     const user = await User.findByIdAndUpdate(
       userId,
