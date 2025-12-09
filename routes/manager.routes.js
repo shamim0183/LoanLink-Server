@@ -22,4 +22,12 @@ router.patch(
 )
 router.patch("/applications/:appId/reject", managerController.rejectApplication)
 
+// Borrower management routes
+router.get("/borrowers", managerController.getBorrowers)
+router.patch("/borrowers/:userId/suspend", managerController.suspendBorrower)
+router.patch(
+  "/borrowers/:userId/unsuspend",
+  managerController.unsuspendBorrower
+)
+
 module.exports = router

@@ -18,10 +18,32 @@ const verifyToken = (req, res, next) => {
     const User = require("../models/User.model")
     const user = await User.findOne({ email: decoded.email })
 
+    if (!user) {
+      return res.status(401).json({ message: "User not found" })
+    }
+
+    // Auto-unsuspend if suspension has expired
+    if (user.suspendUntil && new Date() >= user.suspendUntil) {
+      await User.findByIdAndUpdate(user._id, {
+        status: "active",
+        suspendReason: null,
+        suspensionReason: null,
+        suspendedAt: null,
+        suspendUntil: null,
+      })
+      // Refresh user data
+      user.status = "active"
+      user.suspendUntil = null
+      user.suspensionReason = null
+    }
+
     req.user = {
       email: decoded.email,
       role: decoded.role,
       userId: user?._id,
+      suspendUntil: user.suspendUntil,
+      suspensionReason: user.suspensionReason,
+      isSuspended: user.isSuspended,
     }
     next()
   })

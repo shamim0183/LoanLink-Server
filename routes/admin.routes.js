@@ -11,6 +11,7 @@ router.use(verifyToken, isAdmin)
 router.get("/users", adminController.getAllUsers)
 router.patch("/users/:userId/role", adminController.updateUserRole)
 router.patch("/users/:userId/suspend", adminController.suspendUser)
+router.patch("/users/:userId/unsuspend", adminController.unsuspendUser)
 
 // Loan management routes
 router.get("/loans", adminController.getAllLoans)

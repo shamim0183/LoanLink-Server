@@ -43,7 +43,7 @@ exports.updateUserRole = async (req, res) => {
 exports.suspendUser = async (req, res) => {
   try {
     const { userId } = req.params
-    const { suspended, reason } = req.body
+    const { suspended, reason, duration, durationType } = req.body
 
     // Prevent admin from suspending themselves
     if (userId === req.user.userId) {
@@ -52,19 +52,103 @@ exports.suspendUser = async (req, res) => {
         .json({ error: "You cannot suspend or unsuspend yourself" })
     }
 
-    const user = await User.findByIdAndUpdate(
-      userId,
-      {
-        suspended,
-        suspendReason: reason || "",
-        suspendedAt: suspended ? new Date() : null,
-      },
-      { new: true }
-    ).select("-password")
+    // Get target user to check their role
+    const targetUser = await User.findById(userId)
+    if (!targetUser) {
+      return res.status(404).json({ error: "User not found" })
+    }
+
+    // Prevent admins from suspending other admins
+    if (targetUser.role === "admin") {
+      return res.status(403).json({ error: "Cannot suspend admin users" })
+    }
+
+    let suspendUntil = null
+
+    // Calculate suspendUntil if duration is provided
+    if (suspended && duration && durationType) {
+      const now = new Date()
+      const durationValue = parseInt(duration)
+
+      switch (durationType) {
+        case "minute":
+          suspendUntil = new Date(now.getTime() + durationValue * 60 * 1000)
+          break
+        case "hour":
+          suspendUntil = new Date(
+            now.getTime() + durationValue * 60 * 60 * 1000
+          )
+          break
+        case "day":
+          suspendUntil = new Date(
+            now.getTime() + durationValue * 24 * 60 * 60 * 1000
+          )
+          break
+        case "week":
+          suspendUntil = new Date(
+            now.getTime() + durationValue * 7 * 24 * 60 * 60 * 1000
+          )
+          break
+        case "month":
+          suspendUntil = new Date(now.setMonth(now.getMonth() + durationValue))
+          break
+        case "permanent":
+          suspendUntil = null // Permanent suspension
+          break
+        default:
+          suspendUntil = null
+      }
+    }
+
+    const updateData = {
+      status: suspended ? "suspended" : "active",
+      suspendReason: suspended ? reason || "" : null,
+      suspensionReason: suspended ? reason || "" : null,
+      suspendedAt: suspended ? new Date() : null,
+      suspendUntil: suspended ? suspendUntil : null,
+    }
+
+    const user = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    }).select("-password")
 
     res.json(user)
   } catch (error) {
+    console.error("Suspend user error:", error)
     res.status(500).json({ error: "Failed to suspend user" })
+  }
+}
+
+// Unsuspend user
+exports.unsuspendUser = async (req, res) => {
+  try {
+    const { userId } = req.params
+
+    // Prevent admin from unsuspending themselves (should not be suspended anyway)
+    if (userId === req.user.userId) {
+      return res.status(403).json({ error: "You cannot unsuspend yourself" })
+    }
+
+    const updateData = {
+      status: "active",
+      suspendReason: null,
+      suspensionReason: null,
+      suspendedAt: null,
+      suspendUntil: null,
+    }
+
+    const user = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    }).select("-password")
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" })
+    }
+
+    res.json(user)
+  } catch (error) {
+    console.error("Unsuspend user error:", error)
+    res.status(500).json({ error: "Failed to unsuspend user" })
   }
 }
 

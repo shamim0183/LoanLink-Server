@@ -45,14 +45,20 @@ exports.generateToken = async (req, res) => {
       }
     }
 
-    // Check if user is suspended
+    // Check suspension and auto-unsuspend if expired
     if (user.status === "suspended") {
-      return res.status(403).json({
-        success: false,
-        message: "Account suspended",
-        reason: user.suspendReason,
-        feedback: user.suspendFeedback,
-      })
+      // Check if suspension has expired
+      if (user.suspendUntil && new Date() > new Date(user.suspendUntil)) {
+        // Auto-unsuspend user
+        user.status = "active"
+        user.suspendReason = null
+        user.suspensionReason = null
+        user.suspendFeedback = null
+        user.suspendUntil = null
+        await user.save()
+      }
+      // Don't block login - suspended users can still login
+      // They just can't apply for loans
     }
 
     // Generate JWT token
@@ -80,6 +86,9 @@ exports.generateToken = async (req, res) => {
         photoURL: user.photoURL,
         role: user.role,
         status: user.status,
+        isSuspended: user.isSuspended,
+        suspendUntil: user.suspendUntil,
+        suspensionReason: user.suspensionReason || user.suspendReason,
       },
     })
   } catch (error) {

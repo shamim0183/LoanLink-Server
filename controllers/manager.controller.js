@@ -193,4 +193,130 @@ exports.rejectApplication = async (req, res) => {
   }
 }
 
+// Get all borrowers (for manager's user management)
+exports.getBorrowers = async (req, res) => {
+  try {
+    const User = require("../models/User.model")
+    const borrowers = await User.find({ role: "borrower" }).select("-password")
+    res.json(borrowers)
+  } catch (error) {
+    console.error("Get borrowers error:", error)
+    res.status(500).json({ error: "Failed to fetch borrowers" })
+  }
+}
+
+// Suspend borrower (manager can only suspend borrowers)
+exports.suspendBorrower = async (req, res) => {
+  try {
+    const User = require("../models/User.model")
+    const { userId } = req.params
+    const { reason, duration, durationType } = req.body
+
+    // Get target user
+    const targetUser = await User.findById(userId)
+    if (!targetUser) {
+      return res.status(404).json({ error: "User not found" })
+    }
+
+    // Manager can only suspend borrowers
+    if (targetUser.role !== "borrower") {
+      return res
+        .status(403)
+        .json({ error: "Managers can only suspend borrowers" })
+    }
+
+    let suspendUntil = null
+
+    // Calculate suspendUntil if duration is provided
+    if (duration && durationType) {
+      const now = new Date()
+      const durationValue = parseInt(duration)
+
+      switch (durationType) {
+        case "minute":
+          suspendUntil = new Date(now.getTime() + durationValue * 60 * 1000)
+          break
+        case "hour":
+          suspendUntil = new Date(
+            now.getTime() + durationValue * 60 * 60 * 1000
+          )
+          break
+        case "day":
+          suspendUntil = new Date(
+            now.getTime() + durationValue * 24 * 60 * 60 * 1000
+          )
+          break
+        case "week":
+          suspendUntil = new Date(
+            now.getTime() + durationValue * 7 * 24 * 60 * 60 * 1000
+          )
+          break
+        case "month":
+          suspendUntil = new Date(now.setMonth(now.getMonth() + durationValue))
+          break
+        case "permanent":
+          suspendUntil = null // Permanent suspension
+          break
+        default:
+          suspendUntil = null
+      }
+    }
+
+    const updateData = {
+      status: "suspended",
+      suspendReason: reason || "",
+      suspensionReason: reason || "",
+      suspendedAt: new Date(),
+      suspendUntil: suspendUntil,
+    }
+
+    const user = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    }).select("-password")
+
+    res.json(user)
+  } catch (error) {
+    console.error("Suspend borrower error:", error)
+    res.status(500).json({ error: "Failed to suspend borrower" })
+  }
+}
+
+// Unsuspend borrower
+exports.unsuspendBorrower = async (req, res) => {
+  try {
+    const User = require("../models/User.model")
+    const { userId } = req.params
+
+    // Get target user
+    const targetUser = await User.findById(userId)
+    if (!targetUser) {
+      return res.status(404).json({ error: "User not found" })
+    }
+
+    // Manager can only unsuspend borrowers
+    if (targetUser.role !== "borrower") {
+      return res
+        .status(403)
+        .json({ error: "Managers can only unsuspend borrowers" })
+    }
+
+    const updateData = {
+      status: "active",
+      suspendReason: null,
+      suspensionReason: null,
+      suspendedAt: null,
+      suspendUntil: null,
+    }
+
+    const user = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    }).select("-password")
+
+    res.json(user)
+  } catch (error) {
+    console.error("Unsuspend borrower error:", error)
+    res.status(500).json({ error: "Failed to unsuspend borrower" })
+  }
+}
+
 module.exports = exports
