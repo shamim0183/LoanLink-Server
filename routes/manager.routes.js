@@ -1,32 +1,45 @@
 const express = require("express")
 const router = express.Router()
 const managerController = require("../controllers/manager.controller")
-const { verifyToken } = require("../middleware/auth.middleware")
+const {
+  verifyToken,
+  checkNotSuspended,
+} = require("../middleware/auth.middleware")
 const { isManager } = require("../middleware/role.middleware")
 
 // Middleware to protect all manager routes
 router.use(verifyToken, isManager)
 
-// Loan management routes
-router.post("/loans", managerController.createLoan)
-router.get("/my-loans", managerController.getMyLoans)
-router.patch("/loans/:loanId", managerController.updateLoan)
-router.delete("/loans/:loanId", managerController.deleteLoan)
+// Loan management routes (suspended managers cannot perform these)
+router.post("/loans", checkNotSuspended, managerController.createLoan)
+router.get("/my-loans", managerController.getMyLoans) // Can view their loans
+router.patch("/loans/:loanId", checkNotSuspended, managerController.updateLoan)
+router.delete("/loans/:loanId", checkNotSuspended, managerController.deleteLoan)
 
-// Application management routes
-router.get("/applications/pending", managerController.getPendingApplications)
-router.get("/applications/approved", managerController.getApprovedApplications)
+// Application management routes (suspended managers cannot approve/reject)
+router.get("/applications/pending", managerController.getPendingApplications) // Can view
+router.get("/applications/approved", managerController.getApprovedApplications) // Can view
 router.patch(
   "/applications/:appId/approve",
+  checkNotSuspended,
   managerController.approveApplication
 )
-router.patch("/applications/:appId/reject", managerController.rejectApplication)
+router.patch(
+  "/applications/:appId/reject",
+  checkNotSuspended,
+  managerController.rejectApplication
+)
 
-// Borrower management routes
-router.get("/borrowers", managerController.getBorrowers)
-router.patch("/borrowers/:userId/suspend", managerController.suspendBorrower)
+// Borrower management routes (suspended managers cannot suspend borrowers)
+router.get("/borrowers", managerController.getBorrowers) // Can view
+router.patch(
+  "/borrowers/:userId/suspend",
+  checkNotSuspended,
+  managerController.suspendBorrower
+)
 router.patch(
   "/borrowers/:userId/unsuspend",
+  checkNotSuspended,
   managerController.unsuspendBorrower
 )
 

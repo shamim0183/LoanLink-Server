@@ -14,6 +14,7 @@ router.patch("/users/:userId/suspend", adminController.suspendUser)
 router.patch("/users/:userId/unsuspend", adminController.unsuspendUser)
 
 // Loan management routes
+router.post("/loans", adminController.createLoan)
 router.get("/loans", adminController.getAllLoans)
 router.patch("/loans/:loanId", adminController.updateLoan)
 router.delete("/loans/:loanId", adminController.deleteLoan)

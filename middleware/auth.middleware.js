@@ -41,6 +41,7 @@ const verifyToken = (req, res, next) => {
       email: decoded.email,
       role: decoded.role,
       userId: user?._id,
+      status: user.status, // Add status field
       suspendUntil: user.suspendUntil,
       suspensionReason: user.suspensionReason,
       isSuspended: user.isSuspended,
@@ -72,9 +73,24 @@ const verifyBorrower = (req, res, next) => {
   next()
 }
 
+// Middleware to check if user is not suspended
+const checkNotSuspended = (req, res, next) => {
+  // Only block if status is explicitly 'suspended'
+  if (req.user && req.user.status === "suspended") {
+    return res.status(403).json({
+      message: "Your account is suspended. You cannot perform this action.",
+      suspended: true,
+      suspensionReason: req.user.suspensionReason,
+      suspendUntil: req.user.suspendUntil,
+    })
+  }
+  next()
+}
+
 module.exports = {
   verifyToken,
   verifyAdmin,
   verifyManager,
   verifyBorrower,
+  checkNotSuspended,
 }

@@ -152,6 +152,25 @@ exports.unsuspendUser = async (req, res) => {
   }
 }
 
+// Create new loan (admin)
+exports.createLoan = async (req, res) => {
+  try {
+    const loanData = {
+      ...req.body,
+      createdBy: req.user.userId,
+      createdAt: new Date(),
+    }
+
+    const loan = await Loan.create(loanData)
+    res.status(201).json(loan)
+  } catch (error) {
+    console.error("Create loan error:", error)
+    res
+      .status(500)
+      .json({ error: "Failed to create loan", details: error.message })
+  }
+}
+
 // Get all loans (admin view)
 exports.getAllLoans = async (req, res) => {
   try {
