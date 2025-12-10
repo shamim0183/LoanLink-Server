@@ -1,6 +1,8 @@
-// Role-based middleware for authorization
+/**
+ * Role-based authorization middleware
+ * Used to restrict routes based on user roles (admin, manager, borrower)
+ */
 
-// Check if user is admin
 exports.isAdmin = (req, res, next) => {
   if (req.user?.role !== "admin") {
     return res.status(403).json({ error: "Access denied. Admin only." })
@@ -8,7 +10,6 @@ exports.isAdmin = (req, res, next) => {
   next()
 }
 
-// Check if user is manager or admin
 exports.isManager = (req, res, next) => {
   if (req.user?.role !== "manager" && req.user?.role !== "admin") {
     return res.status(403).json({ error: "Access denied. Manager only." })
@@ -16,7 +17,6 @@ exports.isManager = (req, res, next) => {
   next()
 }
 
-// Check if user is borrower
 exports.isBorrower = (req, res, next) => {
   if (!req.user?.role) {
     return res.status(403).json({ error: "Access denied." })

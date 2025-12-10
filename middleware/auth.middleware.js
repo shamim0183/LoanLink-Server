@@ -14,7 +14,6 @@ const verifyToken = (req, res, next) => {
       return res.status(401).json({ message: "Invalid or expired token" })
     }
 
-    // Find user to get userId
     const User = require("../models/User.model")
     const user = await User.findOne({ email: decoded.email })
 
@@ -22,7 +21,7 @@ const verifyToken = (req, res, next) => {
       return res.status(401).json({ message: "User not found" })
     }
 
-    // Auto-unsuspend if suspension has expired
+    // Auto-unsuspend expired suspensions
     if (user.suspendUntil && new Date() >= user.suspendUntil) {
       await User.findByIdAndUpdate(user._id, {
         status: "active",
@@ -31,7 +30,7 @@ const verifyToken = (req, res, next) => {
         suspendedAt: null,
         suspendUntil: null,
       })
-      // Refresh user data
+      // Update local user object to reflect changes
       user.status = "active"
       user.suspendUntil = null
       user.suspensionReason = null
@@ -41,7 +40,7 @@ const verifyToken = (req, res, next) => {
       email: decoded.email,
       role: decoded.role,
       userId: user?._id,
-      status: user.status, // Add status field
+      status: user.status,
       suspendUntil: user.suspendUntil,
       suspensionReason: user.suspensionReason,
       isSuspended: user.isSuspended,
