@@ -121,6 +121,17 @@ exports.updateProfile = async (req, res) => {
   const { email } = req.user // From auth middleware
 
   try {
+    // Fetch user first
+    const user = await User.findOne({ email })
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      })
+    }
+
+    // Build update data using existing user values as defaults
     const updateData = {
       name: name || user.name,
       photoURL: photoURL !== undefined ? photoURL : user.photoURL,
@@ -132,29 +143,23 @@ exports.updateProfile = async (req, res) => {
       updateData.role = role
     }
 
-    const user = await User.findOneAndUpdate(
+    // Update user
+    const updatedUser = await User.findOneAndUpdate(
       { email },
       { $set: updateData },
       { new: true }
     )
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      })
-    }
-
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
       user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        photoURL: user.photoURL,
-        role: user.role,
-        status: user.status,
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        photoURL: updatedUser.photoURL,
+        role: updatedUser.role,
+        status: updatedUser.status,
       },
     })
   } catch (error) {
