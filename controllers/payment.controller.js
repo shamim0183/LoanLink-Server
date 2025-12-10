@@ -15,11 +15,11 @@ exports.createCheckoutSession = async (req, res) => {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `Loan Application Fee - ${loanTitle}`,
-              description: `Application fee for ${loanTitle} loan of $${applicationData.loanAmount}`,
+              name: `${loanTitle} - Application Fee`,
+              description: `Processing fee for ${loanTitle} loan of $${applicationData.loanAmount.toLocaleString()}`,
               images: applicationData.loanImage
                 ? [applicationData.loanImage]
-                : [],
+                : [], // Show loan image
             },
             unit_amount: amount * 100, // Convert to cents
           },
