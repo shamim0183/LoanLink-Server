@@ -50,13 +50,50 @@ STRIPE_WEBHOOK_SECRET=your_webhook_secret
 
 ```
 server/
-├── config/          # Database configuration
-├── controllers/     # Route handlers
-├── middleware/      # Auth & validation
-├── models/          # Mongoose schemas
-├── routes/          # API endpoints
-└── server.js        # Entry point
+├── config/                         # Configuration files
+│   ├── db.config.js               # MongoDB connection setup
+│   └── stripe.config.js           # Stripe client configuration
+├── controllers/                    # Business logic handlers
+│   ├── admin.controller.js        # Admin operations (users, roles, suspend)
+│   ├── application.controller.js  # Loan application CRUD
+│   ├── auth.controller.js         # JWT generation and validation
+│   ├── loan.controller.js         # Loan product operations
+│   ├── manager.controller.js      # Manager operations (approve/reject)
+│   └── payment.controller.js      # Stripe payment processing
+├── middleware/                     # Express middleware
+│   ├── auth.middleware.js         # JWT verification
+│   ├── role.middleware.js         # Role-based access control (RBAC)
+│   ├── validation.middleware.js   # Request validation
+│   ├── errorHandler.middleware.js # Global error handling
+│   └── logger.middleware.js       # Request logging
+├── models/                         # Mongoose schemas
+│   ├── User.model.js              # User schema (auth, roles, suspension)
+│   ├── Loan.model.js              # Loan product schema
+│   ├── LoanApplication.model.js   # Application schema (status, history)
+│   └── Payment.model.js           # Payment records schema
+├── routes/                         # API route definitions
+│   ├── auth.routes.js             # POST /api/auth/jwt
+│   ├── loan.routes.js             # GET /api/loans
+│   ├── application.routes.js      # /api/applications/*
+│   ├── payment.routes.js          # /api/payments/*
+│   ├── dashboard.routes.js        # /api/dashboard/stats
+│   ├── manager.routes.js          # /api/manager/*
+│   └── admin.routes.js            # /api/admin/*
+├── .env                            # Environment variables
+├── .gitignore                      # Git ignore rules
+├── server.js                       # Express app entry point
+├── seed-loans.js                   # Database seeding script
+└── package.json                    # Dependencies
 ```
+
+### Key Architecture Features
+
+- **RESTful API Design**: Clean resource-based endpoints
+- **RBAC Middleware**: Role-based access control for Admin/Manager routes
+- **JWT Authentication**: HTTP-only cookie-based sessions
+- **Stripe Integration**: Secure payment processing with webhooks
+- **Error Handling**: Centralized error middleware
+- **Database Seeding**: Pre-populated loan products for testing
 
 ## 🔌 API Endpoints
 
