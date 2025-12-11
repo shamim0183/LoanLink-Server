@@ -1,5 +1,11 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
 const Payment = require("../models/Payment.model")
+const {
+  populatePaymentDetails,
+  verifyPaymentOwnership,
+  createApplicationFromSession,
+  createPaymentFromSession,
+} = require("../utils/paymentHelpers")
 
 // Create Stripe Checkout Session
 exports.createCheckoutSession = async (req, res) => {
@@ -28,7 +34,7 @@ exports.createCheckoutSession = async (req, res) => {
       ],
       mode: "payment",
       success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.CLIENT_URL}/apply-loan/${loanId}`,
+      cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
       metadata: {
         userEmail: req.user.email,
         userId: req.user.userId.toString(), // Convert ObjectId to string
@@ -112,10 +118,9 @@ exports.getPaymentReceipt = async (req, res) => {
   try {
     const { sessionId } = req.params
 
-    const payment = await Payment.findOne({ stripeSessionId: sessionId })
-      .populate("userId", "name email photoURL")
-      .populate("loanId", "title category amount interestRate")
-      .populate("applicationId")
+    const payment = await populatePaymentDetails(
+      Payment.findOne({ stripeSessionId: sessionId })
+    )
 
     if (!payment) {
       return res.status(404).json({
@@ -125,10 +130,12 @@ exports.getPaymentReceipt = async (req, res) => {
     }
 
     // Verify user owns this payment
-    if (payment.userId._id.toString() !== req.user.userId) {
-      return res.status(403).json({
+    try {
+      verifyPaymentOwnership(payment, req.user.userId)
+    } catch (error) {
+      return res.status(error.status || 403).json({
         success: false,
-        message: "Unauthorized",
+        message: error.message,
       })
     }
 
@@ -151,10 +158,9 @@ exports.getPaymentByApplication = async (req, res) => {
   try {
     const { applicationId } = req.params
 
-    const payment = await Payment.findOne({ applicationId })
-      .populate("userId", "name email photoURL")
-      .populate("loanId", "title category amount interestRate")
-      .populate("applicationId")
+    const payment = await populatePaymentDetails(
+      Payment.findOne({ applicationId })
+    )
 
     if (!payment) {
       return res.status(404).json({
@@ -164,10 +170,12 @@ exports.getPaymentByApplication = async (req, res) => {
     }
 
     // Verify user owns this payment
-    if (payment.userId._id.toString() !== req.user.userId.toString()) {
-      return res.status(403).json({
+    try {
+      verifyPaymentOwnership(payment, req.user.userId)
+    } catch (error) {
+      return res.status(error.status || 403).json({
         success: false,
-        message: "Unauthorized",
+        message: error.message,
       })
     }
 
@@ -219,38 +227,14 @@ exports.handleStripeWebhook = async (req, res) => {
       const applicationData = JSON.parse(session.metadata.applicationData)
 
       // Create loan application
-      const application = await LoanApplication.create({
-        userEmail: session.metadata.userEmail,
-        userId: session.metadata.userId,
-        loanId: session.metadata.loanId,
-        loanTitle: session.metadata.loanTitle,
-        interestRate: applicationData.interestRate || 0,
-        firstName: applicationData.firstName,
-        lastName: applicationData.lastName,
-        contactNumber: applicationData.contactNumber,
-        nationalId: applicationData.nationalId,
-        incomeSource: applicationData.incomeSource,
-        monthlyIncome: applicationData.monthlyIncome,
-        loanAmount: applicationData.loanAmount,
-        reason: applicationData.reason,
-        address: applicationData.address,
-        extraNotes: applicationData.extraNotes || "",
-        status: "pending",
-        applicationFeeStatus: "paid",
-      })
+      const application = await createApplicationFromSession(
+        LoanApplication,
+        session,
+        applicationData
+      )
 
       // Create payment record
-      await Payment.create({
-        userEmail: session.metadata.userEmail,
-        userId: session.metadata.userId,
-        applicationId: application._id,
-        loanId: session.metadata.loanId,
-        amount: session.amount_total / 100, // Convert from cents
-        transactionId: session.payment_intent,
-        stripeSessionId: session.id,
-        status: "completed",
-        paymentMethod: "stripe",
-      })
+      await createPaymentFromSession(Payment, session, application._id)
 
       console.log("✅ Payment and application created successfully")
     } catch (error) {
@@ -267,10 +251,9 @@ exports.getPaymentReceipt = async (req, res) => {
   try {
     const { sessionId } = req.params
 
-    const payment = await Payment.findOne({ stripeSessionId: sessionId })
-      .populate("loanId", "title category interestRate maxLoanLimit")
-      .populate("applicationId")
-      .populate("userId", "name email")
+    const payment = await populatePaymentDetails(
+      Payment.findOne({ stripeSessionId: sessionId })
+    )
 
     if (!payment) {
       return res.status(404).json({
@@ -280,10 +263,12 @@ exports.getPaymentReceipt = async (req, res) => {
     }
 
     // Ensure the user can only access their own receipt
-    if (payment.userId._id.toString() !== req.user.userId) {
-      return res.status(403).json({
+    try {
+      verifyPaymentOwnership(payment, req.user.userId)
+    } catch (error) {
+      return res.status(error.status || 403).json({
         success: false,
-        message: "Unauthorized access",
+        message: error.message,
       })
     }
 
@@ -311,10 +296,9 @@ exports.processStripeSession = async (req, res) => {
       stripeSessionId: sessionId,
     })
     if (existingPayment) {
-      const populatedPayment = await Payment.findById(existingPayment._id)
-        .populate("userId", "name email photoURL")
-        .populate("loanId", "title category amount interestRate")
-        .populate("applicationId")
+      const populatedPayment = await populatePaymentDetails(
+        Payment.findById(existingPayment._id)
+      )
 
       return res.status(200).json({
         success: true,
@@ -351,25 +335,11 @@ exports.processStripeSession = async (req, res) => {
       application = existingApplication
     } else {
       // Create loan application
-      application = await LoanApplication.create({
-        userEmail: session.metadata.userEmail,
-        userId: session.metadata.userId,
-        loanId: session.metadata.loanId,
-        loanTitle: session.metadata.loanTitle,
-        interestRate: applicationData.interestRate || 0,
-        firstName: applicationData.firstName,
-        lastName: applicationData.lastName,
-        contactNumber: applicationData.contactNumber,
-        nationalId: applicationData.nationalId,
-        incomeSource: applicationData.incomeSource,
-        monthlyIncome: applicationData.monthlyIncome,
-        loanAmount: applicationData.loanAmount,
-        reason: applicationData.reason,
-        address: applicationData.address,
-        extraNotes: applicationData.extraNotes || "",
-        status: "pending",
-        applicationFeeStatus: "paid",
-      })
+      application = await createApplicationFromSession(
+        LoanApplication,
+        session,
+        applicationData
+      )
       console.log("✅ Created new loan application")
     }
 
@@ -382,10 +352,9 @@ exports.processStripeSession = async (req, res) => {
       console.log(
         "✅ Payment already exists for this transaction, returning existing"
       )
-      const populatedPayment = await Payment.findById(existingPaymentByTxn._id)
-        .populate("userId", "name email photoURL")
-        .populate("loanId", "title category amount interestRate")
-        .populate("applicationId")
+      const populatedPayment = await populatePaymentDetails(
+        Payment.findById(existingPaymentByTxn._id)
+      )
 
       return res.status(200).json({
         success: true,
@@ -395,23 +364,16 @@ exports.processStripeSession = async (req, res) => {
     }
 
     // Create payment record
-    const payment = await Payment.create({
-      userEmail: session.metadata.userEmail,
-      userId: session.metadata.userId,
-      applicationId: application._id,
-      loanId: session.metadata.loanId,
-      amount: session.amount_total / 100,
-      transactionId: session.payment_intent,
-      stripeSessionId: session.id,
-      status: "completed",
-      paymentMethod: "stripe",
-    })
+    const payment = await createPaymentFromSession(
+      Payment,
+      session,
+      application._id
+    )
 
     // Populate payment data
-    const populatedPayment = await Payment.findById(payment._id)
-      .populate("userId", "name email photoURL")
-      .populate("loanId", "title category amount interestRate")
-      .populate("applicationId")
+    const populatedPayment = await populatePaymentDetails(
+      Payment.findById(payment._id)
+    )
 
     console.log(
       "✅ Payment and application created successfully via session processing"
