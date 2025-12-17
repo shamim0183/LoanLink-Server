@@ -55,4 +55,11 @@ const loanSchema = new mongoose.Schema(
   }
 )
 
+// Add indexes for query optimization
+// Compound index for showOnHome + createdAt (used in getHomeLoans query)
+loanSchema.index({ showOnHome: 1, createdAt: -1 })
+
+// Index on createdBy for faster populate operations
+loanSchema.index({ createdBy: 1 })
+
 module.exports = mongoose.model("Loan", loanSchema)
